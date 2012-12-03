@@ -35,6 +35,8 @@ module Mongoid
 
           index owner_id: 1
           default_scope desc(:created_at)
+
+          field :deleted_at, type: DateTime
         end
       }
     end
