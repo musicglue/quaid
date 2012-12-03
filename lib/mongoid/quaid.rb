@@ -8,7 +8,7 @@ module Mongoid
       has_many :versions, class_name: self.to_s + "::Version", foreign_key: "owner_id"
 
       def last_version
-        self.class.new versions[1].attributes
+        self.class.new versions[1].try(:attributes)
       end
 
       klass.class_eval %Q{
@@ -19,7 +19,7 @@ module Mongoid
         set_callback :save, :after do |doc|
           attributes = MultiJson.decode MultiJson.encode doc
           Version.create(attributes.merge(owner_id: doc.id))
-          doc.last_version.set(deleted_at: DateTime.now)
+          doc.last_version.try(:set, {deleted_at: DateTime.now})
         end
 
         class Version
