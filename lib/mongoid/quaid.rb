@@ -18,9 +18,9 @@ module Mongoid
 
         set_callback :save, :after do |doc|
           attributes = MultiJson.decode MultiJson.encode doc
-          Version.create(attributes.merge(owner_id: doc.id, deleted_at: DateTime.now))
+          Version.create(attributes.merge(owner_id: doc.id))
+          doc.last_version.set(deleted_at: DateTime.now)
         end
-
 
         class Version
           include Mongoid::Document
