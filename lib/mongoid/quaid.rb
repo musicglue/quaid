@@ -5,27 +5,39 @@ module Mongoid
     included do |klass|
       field :version,     type: Integer,  default: 0
 
-      has_many :versions, class_name: self.to_s + "::Version", foreign_key: "owner_id"
+      has_many :versions, class_name: self.to_s + "::Version", foreign_key: "owner_id", dependent: :destroy
 
       def last_version
         self.class.new versions[1].try(:attributes)
       end
 
-      klass.class_eval %Q{
-        set_callback :save, :before do |doc|
-          doc.version += 1
-        end
+      set_callback :save, :before do |doc|
+        doc.version += 1
+      end
 
-        set_callback :save, :after do |doc|
-          attributes = MultiJson.decode MultiJson.encode doc
-          Version.create(attributes.merge(owner_id: doc.id))
-          doc.last_version.try(:set, {deleted_at: DateTime.now})
+      set_callback :save, :after do |doc|
+        attributes = MultiJson.decode MultiJson.encode doc
+        doc.class::Version.create(attributes.merge(owner_id: doc.id))
+        doc.last_version.try(:set, {deleted_at: DateTime.now})
+        if doc.class.versions && doc.versions.count > doc.class.versions
+          doc.versions.last.delete
+        end
+      end
+
+      module_eval <<-RUBY, __FILE__, __LINE__ + 1
+        class << self
+          attr_accessor :versions
+          def quaid opts={}
+            return unless opts[:versions]
+            @versions = opts[:versions]
+          end
         end
 
         class Version
           include Mongoid::Document
           include Mongoid::Timestamps
-
+          include Mongoid::Paranoia
+          
           store_in collection: self.to_s.underscore.gsub("/version", "") + "_versions"
 
           def initialize(attributes={}, options=nil)
@@ -38,7 +50,7 @@ module Mongoid
 
           field :deleted_at, type: DateTime
         end
-      }
+      RUBY
     end
 
     module ClassMethods
