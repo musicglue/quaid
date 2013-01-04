@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/musicglue/quaid.png?branch=master)](https://travis-ci.org/musicglue/quaid)
 # Quaid
 
 TODO: Write a gem description
