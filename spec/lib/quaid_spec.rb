@@ -32,6 +32,14 @@ describe Mongoid::Quaid do
       @project.last_version.version.should eq(0)
     end
 
+    it "should return an arbitrary version" do
+      old_name = @project.name
+      @project.name = Faker::Name.name
+      @project.save
+      old_proj = Project.find_with_version(@project.id, 1)
+      old_proj.version.should eq(1)
+    end
+
     it "should create a new version with the current attributes if updated" do
       old_name = @project.name
       @project.name = Faker::Name.name

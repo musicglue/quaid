@@ -31,6 +31,15 @@ module Mongoid
             return unless opts[:versions]
             @versions = opts[:versions]
           end
+
+          def find_with_version id, version
+            v = Version.where(owner_id: id, version: version).first.try(:attributes)
+            if v.nil?
+              nil
+            else
+              new v
+            end
+          end
         end
 
         class Version
