@@ -42,7 +42,7 @@ module Mongoid
 
 
       def last_version
-        versions.first.try(:attributes)#.to_hash
+        versions.skip(1).first.try(:attributes)#.to_hash
       end
 
       set_callback :save, :before do |doc|
