@@ -17,8 +17,7 @@ describe Mongoid::Quaid do
     @list.name = Faker::Name.name
     @list.save
     @list.reload
-    @list.last_version.items.first.class.should eq(Item)
-    @list.last_version.items.first.name.should eq(@list.items.first.name)
+    @list.last_version["items"].first["name"].should eq(@list.items.first.name)
   end
 
 end

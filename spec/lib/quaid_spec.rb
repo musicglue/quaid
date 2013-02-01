@@ -24,12 +24,12 @@ describe Mongoid::Quaid do
       @project.version.should eq(1)
     end
 
-    it "should have created a saved version" do
+    it "should have created a saved version", focus: true do
       Project::Version.count.should eq(1)
     end
 
     it "should have access to its last version through #last_version" do
-      @project.last_version.version.should eq(0)
+      @project.versions.first.version.should eq(1)
     end
 
     it "should return an arbitrary version" do
@@ -37,7 +37,7 @@ describe Mongoid::Quaid do
       @project.name = Faker::Name.name
       @project.save
       old_proj = Project.find_with_version(@project.id, 1)
-      old_proj.version.should eq(1)
+      old_proj["version"].should eq(1)
     end
 
     it "should create a new version with the current attributes if updated" do
@@ -45,8 +45,8 @@ describe Mongoid::Quaid do
       @project.name = Faker::Name.name
       @project.save
       @project.reload
-      @project.last_version.version.should eq(1)
-      @project.last_version.name.should eq(old_name)
+      @project.last_version["version"].should eq(1)
+      @project.last_version["name"].should    eq(old_name)
     end
 
     it "should create a new version with each save" do

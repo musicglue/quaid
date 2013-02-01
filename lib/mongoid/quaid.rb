@@ -6,24 +6,7 @@ module Mongoid
       field :version,     type: Integer,  default: 0
 
       has_many :versions, class_name: self.to_s + "::Version", foreign_key: "owner_id", dependent: :destroy
-
-      def last_version
-        self.class.new versions[1].try(:attributes)
-      end
-
-      set_callback :save, :before do |doc|
-        doc.version += 1
-      end
-
-      set_callback :save, :after do |doc|
-        attributes = MultiJson.decode MultiJson.encode doc
-        doc.class::Version.create(attributes.merge(owner_id: doc.id))
-        doc.last_version.try(:set, {deleted_at: DateTime.now})
-        if doc.class.versions && doc.versions.count > doc.class.versions
-          doc.versions.last.delete
-        end
-      end
-
+      
       module_eval <<-RUBY, __FILE__, __LINE__ + 1
         class << self
           attr_accessor :versions
@@ -33,15 +16,9 @@ module Mongoid
           end
 
           def find_with_version id, version
-            v = Version.where(owner_id: id, version: version).first.try(:attributes)
-            if v.nil?
-              nil
-            else
-              new v
-            end
+            Version.where(owner_id: id, version: version).first.try(:attributes)
           end
         end
-
         class Version
           include Mongoid::Document
           include Mongoid::Timestamps
@@ -55,11 +32,31 @@ module Mongoid
           end
 
           index owner_id: 1
+          index created_at: -1
           default_scope desc(:created_at)
 
           field :deleted_at, type: DateTime
         end
       RUBY
+
+
+
+      def last_version
+        versions.first.try(:attributes)#.to_hash
+      end
+
+      set_callback :save, :before do |doc|
+        doc.version += 1
+      end
+
+      set_callback :save, :after do |doc|
+        attributes = MultiJson.decode MultiJson.encode doc
+        doc.class::Version.create(attributes.merge(owner_id: doc.id))
+        doc.versions.first.try(:set, {deleted_at: DateTime.now})
+        if doc.class.versions && doc.versions.count > doc.class.versions
+          doc.versions.last.delete
+        end
+      end
     end
 
     module ClassMethods
