@@ -5,7 +5,7 @@ module Mongoid
     included do |klass|
       field :version,     type: Integer,  default: 0
 
-      has_many :versions, class_name: self.to_s + "::Version", foreign_key: "owner_id", dependent: :destroy
+      has_many :versions, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :destroy
       
       module_eval <<-RUBY, __FILE__, __LINE__ + 1
         class << self
@@ -16,7 +16,7 @@ module Mongoid
           end
 
           def find_with_version id, version
-            Version.where(owner_id: id, version: version).first.try(:attributes)
+            Version.where(:_owner_id => id, :version => version).first.try(:attributes)
           end
         end
         class Version
@@ -26,16 +26,18 @@ module Mongoid
           
           store_in collection: self.to_s.underscore.gsub("/version", "") + "_versions"
 
-          def initialize(attributes={}, options=nil)
-            attributes.reject!{ |key, val| ["version_ids", "_id"].include?(key) }
-            super(attributes)
+          field :deleted_at, type: DateTime
+          field :_owner_id
+
+          def initialize(attrs={}, options=nil)
+            attrs.reject!{ |key, val| ["version_ids", "_id"].include?(key) }
+            super(attrs)
           end
 
-          index owner_id: 1
-          index created_at: -1
+          index :_owner_id => 1
+          index :created_at => -1
           default_scope desc(:created_at)
 
-          field :deleted_at, type: DateTime
         end
       RUBY
 
@@ -51,7 +53,7 @@ module Mongoid
 
       set_callback :save, :after do |doc|
         attributes = MultiJson.decode MultiJson.encode doc
-        doc.class::Version.create(attributes.merge(owner_id: doc.id))
+        doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
         doc.versions.first.try(:set, {deleted_at: DateTime.now})
         if doc.class.versions && doc.versions.count > doc.class.versions
           doc.versions.last.delete

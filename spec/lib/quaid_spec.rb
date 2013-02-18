@@ -29,7 +29,7 @@ describe Mongoid::Quaid do
     end
 
     it "should have access to its last version through #last_version" do
-      @project.versions.first.version.should eq(1)
+      @project.versions.first["version"].should eq(1)
     end
 
     it "should return an arbitrary version" do
