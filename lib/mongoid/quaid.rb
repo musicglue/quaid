@@ -41,10 +41,8 @@ module Mongoid
         end
       RUBY
 
-
-
       def last_version
-        versions.skip(1).first.try(:attributes)#.to_hash
+        versions.skip(1).first.try(:attributes)
       end
 
       set_callback :save, :before do |doc|
@@ -54,7 +52,9 @@ module Mongoid
       set_callback :save, :after do |doc|
         attributes = MultiJson.decode MultiJson.encode doc
         doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
-        doc.versions.first.try(:set, {deleted_at: DateTime.now})
+        if doc.versions.first
+          doc.versions.first.set(deleted_at: DateTime.now)
+        end
         if doc.class.versions && doc.versions.count > doc.class.versions
           doc.versions.last.delete
         end
