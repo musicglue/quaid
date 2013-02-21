@@ -1,12 +1,56 @@
+require 'ostruct'
+require 'monitor'
+
 module Mongoid
   module Quaid
     extend ActiveSupport::Concern
+
+    class << self
+      def configure
+        config_mutex.synchronize do
+          yield config
+        end
+      end
+
+      def config
+        @config ||= OpenStruct.new(enabled: true)
+      end
+
+      private
+
+      def config_mutex
+        @config_mutex ||= Monitor.new
+      end
+    end
 
     included do |klass|
       field :version,     type: Integer,  default: 0
 
       has_many :versions, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :destroy
-      
+
+      set_callback :save, :before do |doc|
+        if Mongoid::Quaid.config.enabled
+          doc.version += 1
+        end
+      end
+
+      set_callback :save, :after do |doc|
+        if Mongoid::Quaid.config.enabled
+          attributes = MultiJson.decode MultiJson.encode doc
+          doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
+          if doc.versions.first
+            doc.versions.first.set(deleted_at: DateTime.now)
+          end
+          if doc.class.versions && doc.versions.count > doc.class.versions
+            doc.versions.last.delete
+          end
+        end
+      end
+
+      def last_version
+        versions.skip(1).first.try(:attributes)
+      end
+
       module_eval <<-RUBY, __FILE__, __LINE__ + 1
         class << self
           attr_accessor :versions
@@ -40,25 +84,6 @@ module Mongoid
 
         end
       RUBY
-
-      def last_version
-        versions.skip(1).first.try(:attributes)
-      end
-
-      set_callback :save, :before do |doc|
-        doc.version += 1
-      end
-
-      set_callback :save, :after do |doc|
-        attributes = MultiJson.decode MultiJson.encode doc
-        doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
-        if doc.versions.first
-          doc.versions.first.set(deleted_at: DateTime.now)
-        end
-        if doc.class.versions && doc.versions.count > doc.class.versions
-          doc.versions.last.delete
-        end
-      end
     end
 
     module ClassMethods
@@ -67,8 +92,6 @@ module Mongoid
         (self.class.to_s.underscore + "_versions").singularize.camelize
       end
     end
-
-
-
   end
 end
+
