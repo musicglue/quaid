@@ -23,7 +23,7 @@ module Mongoid
           include Mongoid::Document
           include Mongoid::Timestamps
           include Mongoid::Paranoia
-          
+
           store_in collection: self.to_s.underscore.gsub("/version", "") + "_versions"
 
           field :deleted_at, type: DateTime
