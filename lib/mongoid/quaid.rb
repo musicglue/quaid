@@ -38,8 +38,9 @@ module Mongoid
         if Mongoid::Quaid.config.enabled
           attributes = MultiJson.decode MultiJson.encode doc
           doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
-          if doc.versions.first
-            doc.versions.first.set(deleted_at: DateTime.now)
+          old = doc.versions.where(version: (doc.version - 1)).first
+          if old
+            old.set(deleted_at, DateTime.now)
           end
           if doc.class.versions && doc.versions.count > doc.class.versions
             doc.versions.last.delete
