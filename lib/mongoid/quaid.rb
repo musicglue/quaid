@@ -40,7 +40,7 @@ module Mongoid
           doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
           old = doc.versions.where(version: (doc.version - 1)).first
           if old
-            old.set(deleted_at, DateTime.now)
+            old.set(:deleted_at, DateTime.now)
           end
           if doc.class.versions && doc.versions.count > doc.class.versions
             doc.versions.last.delete
