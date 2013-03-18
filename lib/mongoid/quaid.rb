@@ -37,7 +37,9 @@ module Mongoid
       set_callback :save, :after do |doc|
         if Mongoid::Quaid.config.enabled
           attributes = MultiJson.decode MultiJson.encode doc
-          doc.class::Version.create(attributes.merge(:_owner_id => doc.id))
+          attributes = attributes.merge(:_owner_id => doc.id)
+          attributes = attributes.merge(:_owner_type => doc._type)
+          doc.class::Version.create(attributes)
           old = doc.versions.where(version: (doc.version - 1)).first
           if old
             old.set(:deleted_at, DateTime.now)
