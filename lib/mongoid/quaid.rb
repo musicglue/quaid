@@ -38,7 +38,7 @@ module Mongoid
         if Mongoid::Quaid.config.enabled
           attributes = MultiJson.decode MultiJson.encode doc
           attributes = attributes.merge(:_owner_id => doc.id)
-          attributes = attributes.merge(:_owner_type => doc._type)
+          attributes = attributes.merge(:_owner_type => doc._type) if doc.respond_to?(:_type)
           doc.class::Version.create(attributes)
           old = doc.versions.where(version: (doc.version - 1)).first
           if old
