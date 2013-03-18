@@ -17,7 +17,9 @@ module Mongoid
 
       set_callback :save, :after do |doc|
         attributes = MultiJson.decode MultiJson.encode doc
-        doc.class::Version.create(attributes.merge(owner_id: doc.id))
+        attributes = attributes.merge(owner_id: doc.id)
+        attributes = attributes.merge(owner_type: doc._type) if doc._type
+        doc.class::Version.create(attributes)
         doc.last_version.try(:set, {deleted_at: DateTime.now})
         if doc.class.versions && doc.versions.count > doc.class.versions
           doc.versions.last.delete
