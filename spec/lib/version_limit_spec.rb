@@ -8,7 +8,7 @@ describe Mongoid::Quaid do
 
   it "should limit the maximum number of versions that can be stored" do
     5.times {
-      @project.name = Faker::Name.new
+      @project.name = Faker::Name.name
       @project.save
     }
     @project.versions.count.should eq(5)
@@ -16,7 +16,7 @@ describe Mongoid::Quaid do
 
   it "should retain the most recent versions when limited" do
     5.times {
-      @project.name = Faker::Name.new
+      @project.name = Faker::Name.name
       @project.save
     }
     @project.reload

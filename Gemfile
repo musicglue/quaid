@@ -14,6 +14,7 @@ group :test do
 end
 
 group :development do
+  gem 'pry'
   gem 'terminal-notifier-guard'
   gem 'guard'
   gem 'guard-rspec'

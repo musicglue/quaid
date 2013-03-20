@@ -6,6 +6,15 @@ module Mongoid
     extend ActiveSupport::Concern
 
     class << self
+
+      def enable!
+        config.enabled = true
+      end
+
+      def disable!
+        config.enabled = false
+      end
+
       def configure
         config_mutex.synchronize do
           yield config
@@ -26,7 +35,7 @@ module Mongoid
     included do |klass|
       field :version,     type: Integer,  default: 0
 
-      has_many :versions, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :destroy
+      has_many :versions_collection, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :delete
 
       set_callback :save, :before do |doc|
         if Mongoid::Quaid.config.enabled
@@ -45,9 +54,13 @@ module Mongoid
             old.set(:deleted_at, DateTime.now)
           end
           if doc.class.versions && doc.versions.count > doc.class.versions
-            doc.versions.last.delete
+            doc.versions.last.delete!
           end
         end
+      end
+
+      def versions
+        versions_collection.unscoped.order_by(:created_at => :desc)
       end
 
       def last_version
@@ -63,7 +76,7 @@ module Mongoid
           end
 
           def find_with_version id, version
-            Version.where(:_owner_id => id, :version => version).first.try(:attributes)
+            Version.unscoped.where(:_owner_id => id, :version => version).first.try(:attributes)
           end
         end
         class Version

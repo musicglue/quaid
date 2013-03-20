@@ -11,6 +11,19 @@ describe Mongoid::Quaid do
     end
   end
 
+  context "enable and disable shortcuts" do
+    it "can be enabled" do
+      Mongoid::Quaid.enable!
+      Mongoid::Quaid.config.enabled.should be_true
+    end
+
+    it "can be disabled" do
+      Mongoid::Quaid.disable!
+      Mongoid::Quaid.config.enabled.should be_false
+      Mongoid::Quaid.enable!
+    end
+  end
+
   context ".configure" do
     it "yields the config ostruct" do
       yielded = nil
@@ -111,7 +124,7 @@ describe Mongoid::Quaid do
           @project.name = Faker::Name.name
           @project.save
         }
-      }.should change{ Project::Version.count }.from(1).to(n+1)
+      }.should change{ @project.version }.from(1).to(n+1)
     end
 
     it "should order the versions by their creation date descending" do
@@ -119,13 +132,13 @@ describe Mongoid::Quaid do
         @project.name = Faker::Name.name
         @project.save
       }
-      Project::Version.last.version.should eq(1)
+      @project.versions.last.version.should eq(1)
     end
 
     it "should destroy associated versions when record is destroy" do
       id = @project.id
       @project.destroy
-      Project::Version.where(owner_id: id).count.should eq(0)
+      @project.versions.size.should eq(0)
     end
   end
 end
