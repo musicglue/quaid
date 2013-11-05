@@ -83,6 +83,7 @@ module Mongoid
           include Mongoid::Document
           include Mongoid::Timestamps
           include Mongoid::Paranoia
+          include Mongoid::Attributes::Dynamic
 
           store_in collection: self.to_s.underscore.gsub("/version", "") + "_versions"
 
