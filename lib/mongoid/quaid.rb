@@ -97,7 +97,7 @@ module Mongoid
 
           index :_owner_id => 1
           index :created_at => -1
-          default_scope desc(:created_at)
+          default_scope ->{ desc(:created_at) }
 
         end
       RUBY
