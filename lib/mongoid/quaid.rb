@@ -37,13 +37,11 @@ module Mongoid
 
       has_many :versions_collection, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :delete
 
-      set_callback :save, :before do |doc|
-        if Mongoid::Quaid.config.enabled
-          doc.version += 1
-        end
+      before_save do
+        self.version += 1 if Mongoid::Quaid.config.enabled
       end
 
-      set_callback :save, :after do |doc|
+      after_save do |doc|
         if Mongoid::Quaid.config.enabled
           attributes = MultiJson.decode MultiJson.encode doc
           attributes = attributes.merge(:_owner_id => doc.id)
@@ -51,7 +49,7 @@ module Mongoid
           doc.class::Version.create(attributes)
           old = doc.versions.where(version: (doc.version - 1)).first
           if old
-            old.set(:deleted_at, DateTime.now)
+            old.set(deleted_at: DateTime.now)
           end
           if doc.class.versions && doc.versions.count > doc.class.versions
             doc.versions.last.delete!
