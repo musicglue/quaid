@@ -77,13 +77,14 @@ module Mongoid
             Version.unscoped.where(:_owner_id => id, :version => version).first.try(:attributes)
           end
         end
+
         class Version
           include Mongoid::Document
           include Mongoid::Timestamps
           include Mongoid::Paranoia
           include Mongoid::Attributes::Dynamic
 
-          store_in collection: self.to_s.underscore.gsub("/version", "") + "_versions"
+          store_in collection: (self.to_s.underscore.gsub("/version", "") + "_versions").gsub('/', '__')
 
           field :deleted_at, type: DateTime
           field :_owner_id
