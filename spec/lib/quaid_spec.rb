@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongoid::Quaid do
   context ".config" do
     it "defaults to true" do
-      described_class.config.enabled.should be_true
+      described_class.config.enabled.should == true
     end
 
     it "is not writable" do
@@ -14,12 +14,12 @@ describe Mongoid::Quaid do
   context "enable and disable shortcuts" do
     it "can be enabled" do
       Mongoid::Quaid.enable!
-      Mongoid::Quaid.config.enabled.should be_true
+      Mongoid::Quaid.config.enabled.should == true
     end
 
     it "can be disabled" do
       Mongoid::Quaid.disable!
-      Mongoid::Quaid.config.enabled.should be_false
+      Mongoid::Quaid.config.enabled.should == false
       Mongoid::Quaid.enable!
     end
   end

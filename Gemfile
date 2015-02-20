@@ -9,7 +9,7 @@ group :test do
   gem 'rb-fsevent'
   gem 'spork'
   gem 'faker'
-  gem 'database_cleaner'
+  gem 'database_cleaner', '< 1.4'
   gem 'factory_girl'
 end
 

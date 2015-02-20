@@ -1,5 +1,6 @@
 require 'ostruct'
 require 'monitor'
+require 'mongoid_paranoia'
 
 module Mongoid
   module Quaid
@@ -43,7 +44,7 @@ module Mongoid
 
       after_save do |doc|
         if Mongoid::Quaid.config.enabled
-          attributes = MultiJson.decode MultiJson.encode doc
+          attributes = ActiveSupport::JSON.decode ActiveSupport::JSON.encode doc
           attributes = attributes.merge(:_owner_id => doc.id)
           attributes = attributes.merge(:_owner_type => doc._type) if doc.respond_to?(:_type)
           doc.class::Version.create(attributes)
@@ -58,11 +59,11 @@ module Mongoid
       end
 
       def versions
-        versions_collection.order_by(version: :desc)
+        versions_collection.unscoped.order_by(version: :desc, created_at: :desc)
       end
 
       def last_version
-        versions.skip(1).first.try(:attributes)
+        versions.unscoped.skip(1).first.try(:attributes)
       end
 
       module_eval <<-RUBY, __FILE__, __LINE__ + 1
@@ -74,9 +75,10 @@ module Mongoid
           end
 
           def find_with_version id, version
-            Version.where(_owner_id: id, version: version).first.try(:attributes)
+            Version.unscoped.where(_owner_id: id, version: version).order_by(created_at: :desc).first.try(:attributes)
           end
         end
+
         class Version
           include Mongoid::Document
           include Mongoid::Timestamps
@@ -93,7 +95,7 @@ module Mongoid
             super(attrs)
           end
 
-          index({ _owner_id: 1, version: 1 }, { background: true })
+          index({ _owner_id: 1, version: 1, created_at: -1 }, { background: true })
         end
       RUBY
     end

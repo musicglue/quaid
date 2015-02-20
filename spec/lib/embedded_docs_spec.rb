@@ -19,5 +19,4 @@ describe Mongoid::Quaid do
     @list.reload
     @list.last_version["items"].first["name"].should eq(@list.items.first.name)
   end
-
 end
