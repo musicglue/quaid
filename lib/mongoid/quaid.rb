@@ -33,7 +33,7 @@ module Mongoid
     end
 
     included do |klass|
-      field :version,     type: Integer,  default: 0
+      field :version, type: Integer, default: 0
 
       has_many :versions_collection, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :delete
 
@@ -58,7 +58,7 @@ module Mongoid
       end
 
       def versions
-        versions_collection.unscoped.order_by(:created_at => :desc)
+        versions_collection.order_by(version: :desc)
       end
 
       def last_version
@@ -74,7 +74,7 @@ module Mongoid
           end
 
           def find_with_version id, version
-            Version.unscoped.where(:_owner_id => id, :version => version).first.try(:attributes)
+            Version.where(_owner_id: id, version: version).first.try(:attributes)
           end
         end
         class Version
@@ -93,10 +93,7 @@ module Mongoid
             super(attrs)
           end
 
-          index :_owner_id => 1
-          index :created_at => -1
-          default_scope ->{ desc(:created_at) }
-
+          index({ _owner_id: 1, version: 1 }, { background: true, unique: true })
         end
       RUBY
     end
