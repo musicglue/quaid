@@ -93,7 +93,7 @@ module Mongoid
             super(attrs)
           end
 
-          index({ _owner_id: 1, version: 1, deleted_at: 1 }, { background: true, unique: true })
+          index({ _owner_id: 1, version: 1 }, { background: true })
         end
       RUBY
     end
