@@ -33,19 +33,9 @@ module Mongoid
       end
     end
 
-    module ObjectIdRefinement
-      refine BSON::ObjectId do
-        def as_json(*args)
-          to_s
-        end
-      end
-    end
-
-    class AttrCloner
-      using ObjectIdRefinement
-
+    module AttrCloner
       def self.clone(doc)
-        ActiveSupport::JSON.decode(ActiveSupport::JSON.encode(doc)).tap do |x|
+        doc.attributes.dup.tap do |x|
           x.merge!(_owner_id: doc.id)
           x.merge!(_owner_type: doc._type) if doc.respond_to?(:_type)
         end
@@ -63,9 +53,8 @@ module Mongoid
 
       after_save do |doc|
         if Mongoid::Quaid.config.enabled
-          attributes = Mongoid::Quaid::AttrCloner.clone(doc)
-          doc.class::Version.create(attributes)
-          old = doc.versions.where(version: (doc.version - 1)).first
+          doc.class::Version.create(Mongoid::Quaid::AttrCloner.clone(doc))
+          old = doc.versions.where(version: doc.version.pred).first
           if old
             old.set(deleted_at: DateTime.now)
           end
