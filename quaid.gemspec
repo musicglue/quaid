@@ -19,5 +19,5 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency 'mongoid', '> 3.1.0'
   gem.add_dependency 'mongoid_paranoia'
-  gem.add_dependency 'activesupport', '>= 3.2.12'
+  gem.add_dependency 'activesupport', '>= 4.2.10'
 end
