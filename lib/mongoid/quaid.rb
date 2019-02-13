@@ -41,7 +41,7 @@ module Mongoid
       end
     end
 
-    module AttrCloner
+    class AttrCloner
       using ObjectIdRefinement
 
       def self.clone(doc)
