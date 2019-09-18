@@ -45,7 +45,7 @@ module Mongoid
     included do |klass|
       field :version, type: Integer, default: 0
 
-      has_many :versions_collection, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :delete
+      has_many :versions_collection, class_name: self.to_s + "::Version", foreign_key: "_owner_id", dependent: :delete_all
 
       before_save do
         self.version += 1 if Mongoid::Quaid.config.enabled
